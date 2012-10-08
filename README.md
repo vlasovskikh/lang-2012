@@ -25,7 +25,28 @@ function. As we will see, it is not that easy to implement a correct
 backtracking algorithm for `*` (for regexps like `a*a` and `a*ab`). And even a
 correct backtracking implementation works in exponential time O(2^N).
 
-TODO
+The next step is to create a O(N) implementation. We will do it by converting
+a regexp AST into a non-determenistic automaton (NFA) and then running it on
+an input string.
+
+In order to create an NFA graph we need a graph data type. It is defined in
+our `graph` module as an abstract data type. It means that we define its
+interface (several constructor functions, as well as accessor and mutator
+functions) and access graphs only via this interface without any knowledge of
+its implementation details.
+
+Here are some abstraction barriers that arise in our regexp implementation:
+
+    +--------+
+    |regexp()|
+    +--------+
+    | graph()|
+    +--------+
+    | dict() |
+    +--------+
+
+For example, users of the `regexp()` abstract data type don't have to know
+anything about the NFA based on the `graph()` data type.
 
 
 ### Parsing
