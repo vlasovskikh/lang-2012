@@ -6,8 +6,14 @@
 
 -type regexp() :: empty
                 | {char, integer()}
+                | {class, class_spec()}
                 | {seq, [regexp()]}
                 | {star, regexp()}.
+
+-type class_spec() :: [class_component()].
+
+-type class_component() :: {char, integer()}
+                         | {range, integer(), integer()}.
 
 
 run(S, Regexp) ->

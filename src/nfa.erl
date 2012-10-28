@@ -16,6 +16,8 @@ from_regexp(epsilon, G) ->
   new_nfa(epsilon, G);
 from_regexp({char, C}, G) ->
   new_nfa({char, C}, G);
+from_regexp({class, ClassSpec}, G) ->
+  new_nfa({class, ClassSpec}, G);
 from_regexp({seq, Regexps}, G) ->
   lists:foldl(fun (Regexp, {Start1, Stop1, G1}) ->
                 {Start2, Stop2, G2} = from_regexp(Regexp, G1),
@@ -114,7 +116,11 @@ move(C, State, Graph) ->
 match(_, epsilon) ->
   false;
 match(C1, {char, C2}) ->
-  C1 =:= C2.
+  C1 =:= C2;
+match(C, {range, Start, Stop}) ->
+  C >= Start andalso C =< Stop;
+match(C, {class, ClassSpec}) ->
+  lists:any(fun (Spec) -> match(C, Spec) end, ClassSpec).
 
 
 run_regexp(S, Ast) ->
@@ -147,3 +153,16 @@ no_match_seq_test() ->
   ]},
   ?assertEqual(nomatch, run_regexp("ac", Ast)).
 
+
+char_class_test() ->
+  Ast = {seq, [
+    {char, $a},
+    {class, [{range, $5, $9}, {char, $_}]}
+  ]},
+  ?assertEqual({match, [{0, 2}]}, run_regexp("a5", Ast)),
+  ?assertEqual({match, [{0, 2}]}, run_regexp("a7", Ast)),
+  ?assertEqual({match, [{0, 2}]}, run_regexp("a9", Ast)),
+  ?assertEqual({match, [{0, 2}]}, run_regexp("a_", Ast)),
+  ?assertEqual(nomatch, run_regexp("a4", Ast)),
+  ?assertEqual(nomatch, run_regexp("a-", Ast)),
+  ?assertEqual(nomatch, run_regexp("ab", Ast)).
