@@ -95,7 +95,9 @@ run(S, States, Stop, Graph) ->
     end,
     {States, Pos, max_pos(States, Stop, Pos, Max)},
     S),
-  Max2 >= 0.
+  if Max2 >= 0 -> {match, [{Pos, Max2}]};
+     true -> nomatch
+  end.
 
 
 move(C, State, Graph) ->
@@ -125,9 +127,9 @@ ab_star_test() ->
     {char, $a},
     {char, $b}
   ]}},
-  ?assertEqual(true, run_regexp("abab", Ast)),
-  ?assertEqual(true, run_regexp("b", Ast)),
-  ?assertEqual(true, run_regexp("", Ast)).
+  ?assertEqual({match, [{0, 4}]}, run_regexp("abab", Ast)),
+  ?assertEqual({match, [{0, 0}]}, run_regexp("b", Ast)),
+  ?assertEqual({match, [{0, 0}]}, run_regexp("", Ast)).
 
 
 substring_match_test() ->
@@ -135,7 +137,7 @@ substring_match_test() ->
     {char, $a},
     {char, $b}
   ]}},
-  ?assertEqual(true, run_regexp("ababc", Ast)).
+  ?assertEqual({match, [{0, 4}]}, run_regexp("ababc", Ast)).
 
 
 no_match_seq_test() ->
@@ -143,5 +145,5 @@ no_match_seq_test() ->
     {char, $a},
     {char, $b}
   ]},
-  ?assertEqual(false, run_regexp("ac", Ast)).
+  ?assertEqual(nomatch, run_regexp("ac", Ast)).
 
