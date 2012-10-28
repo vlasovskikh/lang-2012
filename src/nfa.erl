@@ -1,6 +1,7 @@
 -module(nfa).
 -author("vlan").
 -export([from_regexp/1, run/2]).
+-include_lib("eunit/include/eunit.hrl").
 
 
 from_regexp(Regexp) -> from_regexp(Regexp, graph:new()).
@@ -102,3 +103,18 @@ match(_, epsilon) ->
   false;
 match(C1, {char, C2}) ->
   C1 =:= C2.
+
+
+run_regexp(S, Ast) ->
+  Pattern = from_regexp(Ast),
+  run(S, Pattern).
+
+
+ab_star_test() ->
+  Ast = {star, {seq, [
+    {char, $a},
+    {char, $b}
+  ]}},
+  ?assert(run_regexp("abab", Ast) =:= true),
+  ?assert(run_regexp("b", Ast) =:= false),
+  ?assert(run_regexp("", Ast) =:= true).
