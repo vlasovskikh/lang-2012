@@ -71,21 +71,31 @@ epsilon_closure(States, Graph) ->
     States).
 
 
-run([], States, Stop, _) ->
-  sets:is_element(Stop, States);
-run([C|Cs], States, Stop, Graph) ->
-  Moved = sets:fold(
-    fun (State, Acc) ->
-      NextStates = move(C, State, Graph),
-      sets:union(Acc, NextStates)
+max_pos(States, Stop, Pos, Max) ->
+  case sets:is_element(Stop, States) of
+    true -> max(Pos, Max);
+    false -> Max
+  end.
+
+
+run(S, States, Stop, Graph) ->
+  {Pos, Max} = {0, -1},
+  {_, _, Max2} = lists:foldl(
+    fun (C, {States, Pos, Max}) ->
+      Moved = sets:fold(
+        fun (State, Acc) ->
+          States2 = move(C, State, Graph),
+          sets:union(Acc, States2)
+        end,
+        sets:new(),
+        States),
+      States2 = epsilon_closure(Moved, Graph),
+      Pos2 = Pos + 1,
+      {States2, Pos2, max_pos(States2, Stop, Pos2, Max)}
     end,
-    sets:new(),
-    States),
-  EpsilonClosed = epsilon_closure(Moved, Graph),
-  % DEBUG:
-  %io:format("~p ~p-> ~p~n",
-  %          [sets:to_list(States), C, sets:to_list(EpsilonClosed)]),
-  run(Cs, EpsilonClosed, Stop, Graph).
+    {States, Pos, max_pos(States, Stop, Pos, Max)},
+    S),
+  Max2 >= 0.
 
 
 move(C, State, Graph) ->
@@ -115,6 +125,23 @@ ab_star_test() ->
     {char, $a},
     {char, $b}
   ]}},
-  ?assert(run_regexp("abab", Ast) =:= true),
-  ?assert(run_regexp("b", Ast) =:= false),
-  ?assert(run_regexp("", Ast) =:= true).
+  ?assertEqual(true, run_regexp("abab", Ast)),
+  ?assertEqual(true, run_regexp("b", Ast)),
+  ?assertEqual(true, run_regexp("", Ast)).
+
+
+substring_match_test() ->
+  Ast = {star, {seq, [
+    {char, $a},
+    {char, $b}
+  ]}},
+  ?assertEqual(true, run_regexp("ababc", Ast)).
+
+
+no_match_seq_test() ->
+  Ast = {seq, [
+    {char, $a},
+    {char, $b}
+  ]},
+  ?assertEqual(false, run_regexp("ac", Ast)).
+
