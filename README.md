@@ -51,14 +51,45 @@ anything about the NFA based on the `graph()` data type.
 
 ### Parsing
 
-"Normal" regexp EBNF:
+Regular expressions can parse only regular languages. But almost all real
+computer languages are at least context-free (sometimes context-sensitive). Even
+a simple nested parentheses language is not a regular language. So regular
+expressions are not expressive enough for this kind of tasks and we should move
+on to parsers of context-free languages.
 
-    char      = ? any character ?;
-    group     = "(" , regexp , ")"
-    term      = ( group | char ) , [ "*" | "?" ];
-    seq       = { term };
-    alt       = seq , [ "|" , alt ];
-    regexp    = alt;
+One of the simplest ways to create a parser is to write a recursive parser
+with backtracking. You can find an example of a recursive parser for the nested
+parentheses language in the `nested_rec` module.
+
+Writing a recursive parser manually is a tedious task. The resulting parser is
+usually far from being declarative. It only slightly resembles the structure of
+the language grammar. One of the most declarative and compact forms of
+describing a language is the Backus-Naur Form, or BNF. But from an Erlang
+programmer's point of view a BNF grammar of the language is just a string that
+should be parsed and processed in order to become a real parsing code.
+
+A simpler approach to declarative parsers is known as functional parsing
+combinators. A parsing combinator is a function that is either a primitive
+parser, or a composition of several parsers. The structure of a parser based on
+parsing combinators is quite similar to the BNF of the language. The `funparse`
+module defines a simple parsing combinators library. In the `nested` module you
+may find a nested parentheses parser based on parsing combinators.
+
+The first step in creating a parser is to write down a BNF grammar of your
+language. We will use the Extended BNF (EBNF) in our grammar definitions.
+
+A simple regexp EBNF:
+
+    special-char  = ? some of \, (, ), *, etc. ?;
+    escaped-char  = "\" , special-char;
+    regular-char  = ? any char except special-char ?;
+    char          = regular-char | escaped-char;
+    group         = "(" , regexp , ")";
+    char-class    = "[" , { char "-" char | char } , "]";
+    term          = ( group | char | char-class ) , [ "*" | "?" ];
+    seq           = { term };
+    alt           = seq , [ "|" , alt ];
+    regexp        = alt;
 
 TODO
 
