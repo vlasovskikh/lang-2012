@@ -64,6 +64,17 @@ many(P) ->
   end.
 
 
+maybe(P) ->
+  fun (S) ->
+    case P(S) of
+      {ok, Value, S2} ->
+        {ok, {just, Value}, S2};
+      {error, _, S2} ->
+        {ok, nothing, S2}
+    end
+  end.
+
+
 map(F, P) ->
   fun (S) ->
     case P(S) of
@@ -104,4 +115,11 @@ alt_test() ->
   P1 = alt([char($a), char($b)]),
   ?assertEqual({ok, $a, ""}, P1("a")),
   ?assertEqual({ok, $b, ""}, P1("b")).
+
+
+maybe_test() ->
+  P1 = maybe(alt([char($a), char($b)])),
+  ?assertEqual({ok, {just, $a}, ""}, P1("a")),
+  ?assertEqual({ok, {just, $b}, ""}, P1("b")),
+  ?assertEqual({ok, nothing, "c"}, P1("c")).
 
