@@ -35,6 +35,22 @@ seq([P|Ps]) ->
   end.
 
 
+alt([]) ->
+  fun (S) ->
+    {error, "No alternatives found", S}
+  end;
+alt([P|Ps]) ->
+  fun (S) ->
+    case P(S) of
+      {ok, Value, S2} ->
+        {ok, Value, S2};
+      {error, _, S2} ->
+        P2 = alt(Ps),
+        P2(S2)
+    end
+  end.
+
+
 many(P) ->
   fun(S) ->
     case P(S) of
@@ -82,4 +98,10 @@ finished_test() ->
   P2 = seq([P1, fun finished/1]),
   ?assertEqual({ok, [$., $., $.], "a"}, P1("...a")),
   ?assertEqual({error, "Expected end of file, but found 'a'", "a"}, P2("...a")).
+
+
+alt_test() ->
+  P1 = alt([char($a), char($b)]),
+  ?assertEqual({ok, $a, ""}, P1("a")),
+  ?assertEqual({ok, $b, ""}, P1("b")).
 
